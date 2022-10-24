@@ -1,4 +1,6 @@
 """The 21 hand landmarks."""
+import time
+
 # 손가락 위치 정의 참고 https://google.github.io/mediapipe/images/mobile/hand_landmarks.png
 #
 # WRIST = 0
@@ -40,7 +42,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 #Drone on
 myDrone = initTello()
 myDrone.takeoff()
-
+w, h = 640, 480
 # For webcam input:
 
 
@@ -125,12 +127,20 @@ with mp_hands.Hands(
                 draw = ImageDraw.Draw(image)
 
                 text = ""
-                if thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
-                    text = "보"
-                elif thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
-                    text = "가위"
+                if thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
+                    time.sleep(1)
+                    myDrone.move_forward(70)
+                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
+                    time.sleep(1)
+                    myDrone.move_back(70)
+                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 1 and pinky_finger_state == 0:
+                    time.sleep(1)
+                    myDrone.move_left(70)
+                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 1:
+                    time.sleep(1)
+                    myDrone.move_right(70)
                 elif index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
-                    text = "주먹"
+                    time.sleep(1)
 
                 w, h = font.getsize(text)
 
