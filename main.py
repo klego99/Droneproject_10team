@@ -42,7 +42,6 @@ mp_drawing_styles = mp.solutions.drawing_styles
 #Drone on
 myDrone = initTello()
 myDrone.takeoff()
-w, h = 640, 480
 # For webcam input:
 
 
@@ -50,13 +49,8 @@ with mp_hands.Hands(
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as hands:
     while True:
-        success, image = telloGetFrame(myDrone, w, h)
-        cv2.imshow("Image", image)
-        if not success:
-            print("Ignoring empty camera frame.")
-
-            # If loading a video, use 'break' instead of 'continue'.
-            continue
+        image = myDrone.get_frame_read().frame
+        # cv2.imshow("Image", image)
 
         # Flip the image horizontally for a later selfie-view display, and convert
         # the BGR image to RGB.
@@ -128,18 +122,23 @@ with mp_hands.Hands(
 
                 text = ""
                 if thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
+                    text="앞으로"
                     time.sleep(1)
                     myDrone.move_forward(70)
-                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
+                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
+                    text = "뒤로"
                     time.sleep(1)
                     myDrone.move_back(70)
-                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 1 and pinky_finger_state == 0:
+                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 0:
+                    text = "왼쪽으로"
                     time.sleep(1)
                     myDrone.move_left(70)
-                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 1:
+                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
+                    text = "오른쪽으로"
                     time.sleep(1)
                     myDrone.move_right(70)
-                elif index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
+                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
+                    text = "정지"
                     time.sleep(1)
 
                 w, h = font.getsize(text)
