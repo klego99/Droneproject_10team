@@ -139,6 +139,15 @@ with mp_hands.Hands(
                     myDrone.move_right(70)
                 elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text = "정지"
+                    myDrone.takeoff()
+                    time.sleep(1)
+                elif thumb_finger_state == 1 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
+                    text ="위로"
+                    myDrone.move_up(50)
+                    time.sleep(1)
+                elif thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
+                    text = "아래로"
+                    myDrone.move_down(50)
                     time.sleep(1)
 
                 w, h = font.getsize(text)
