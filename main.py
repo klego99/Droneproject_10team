@@ -46,19 +46,21 @@ myDrone.takeoff()
 
 
 with mp_hands.Hands(
+        model_complexity=1,
+        max_num_hands=1,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as hands:
     while True:
+
         image = myDrone.get_frame_read().frame
         # cv2.imshow("Image", image)
-
         # Flip the image horizontally for a later selfie-view display, and convert
         # the BGR image to RGB.
         image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
 
         # To improve performance, optionally mark the image as not writeable to
         # pass by reference.
-        image.flags.writeable = False
+        image.flags.writeable = True
         results = hands.process(image)
 
         # Draw the hand annotations on the image.
@@ -123,32 +125,25 @@ with mp_hands.Hands(
                 text = ""
                 if thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text="앞으로"
-                    time.sleep(1)
                     myDrone.move_forward(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text = "뒤로"
-                    time.sleep(1)
                     myDrone.move_back(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 0:
                     text = "왼쪽으로"
-                    time.sleep(1)
                     myDrone.move_left(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "오른쪽으로"
-                    time.sleep(1)
                     myDrone.move_right(70)
                 elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text = "정지"
-                    myDrone.takeoff()
-                    time.sleep(1)
+                    myDrone.land()
                 elif thumb_finger_state == 1 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text ="위로"
                     myDrone.move_up(50)
-                    time.sleep(1)
                 elif thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "아래로"
                     myDrone.move_down(50)
-                    time.sleep(1)
 
                 w, h = font.getsize(text)
 
@@ -159,13 +154,6 @@ with mp_hands.Hands(
                 draw.text((x, y), text, font=font, fill=(255, 255, 255))
                 image = np.array(image)
 
-                # 손가락 뼈대를 그려줍니다.
-                mp_drawing.draw_landmarks(
-                    image,
-                    hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                    mp_drawing_styles.get_default_hand_landmarks_style(),
-                    mp_drawing_styles.get_default_hand_connections_style())
 
         cv2.imshow('MediaPipe Hands', image)
 
