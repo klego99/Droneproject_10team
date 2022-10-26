@@ -41,7 +41,7 @@ mp_hands = mp.solutions.hands
 mp_drawing_styles = mp.solutions.drawing_styles
 #Drone on
 myDrone = initTello()
-myDrone.takeoff()
+# myDrone.takeoff()
 # For webcam input:
 
 
@@ -125,26 +125,29 @@ with mp_hands.Hands(
                 text = ""
                 if thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text="앞으로"
-                    myDrone.move_forward(70)
+                    # myDrone.move_forward(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text = "뒤로"
-                    myDrone.move_back(70)
+                    # myDrone.move_back(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 0:
                     text = "왼쪽으로"
-                    myDrone.move_left(70)
+                    # myDrone.move_left(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "오른쪽으로"
-                    myDrone.move_right(70)
+                    # myDrone.move_right(70)
                 elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text = "정지"
-                    myDrone.land()
+                    # myDrone.land()
                 elif thumb_finger_state == 1 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text ="위로"
-                    myDrone.move_up(50)
+                    # myDrone.move_up(50)
                 elif thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "아래로"
-                    myDrone.move_down(50)
-
+                    # myDrone.move_down(50)
+                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 1:
+                    text = "촬영"
+                    image = np.array(image)
+                    cv2.imwrite('self camera test.jpg', image)
                 w, h = font.getsize(text)
 
                 x = 50
