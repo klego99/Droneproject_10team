@@ -135,9 +135,6 @@ with mp_hands.Hands(
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "오른쪽으로"
                     myDrone.move_right(70)
-                elif thumb_finger_state == 0 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
-                    text = "정지"
-                    myDrone.land()
                 elif thumb_finger_state == 1 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text ="위로"
                     myDrone.move_up(50)
