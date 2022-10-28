@@ -1,4 +1,5 @@
 """The 21 hand landmarks."""
+import sys
 import time
 
 # 손가락 위치 정의 참고 https://google.github.io/mediapipe/images/mobile/hand_landmarks.png
@@ -34,14 +35,14 @@ import mediapipe as mp
 from PIL import ImageFont, ImageDraw, Image
 import numpy as np
 from utils import *
-
+from os import path
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 mp_drawing_styles = mp.solutions.drawing_styles
 #Drone on
 myDrone = initTello()
-myDrone.takeoff()
+# myDrone.takeoff()
 # For webcam input:
 
 
@@ -125,53 +126,74 @@ with mp_hands.Hands(
                 text = ""
                 if thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text="앞으로"
-                    myDrone.move_forward(70)
+                    # myDrone.move_forward(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text = "뒤로"
-                    myDrone.move_back(70)
+                    # myDrone.move_back(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 0:
                     text = "왼쪽으로"
-                    myDrone.move_left(70)
+                    # myDrone.move_left(70)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "오른쪽으로"
-                    myDrone.move_right(70)
+                    # myDrone.move_right(70)
                 elif thumb_finger_state == 1 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
                     text ="위로"
-                    myDrone.move_up(50)
+                    # myDrone.move_up(50)
                 elif thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "아래로"
-                    myDrone.move_down(50)
+                    # myDrone.move_down(50)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 1:
                     text = "촬영"
                     image = np.array(image)
                     cv2.imwrite('self camera test.jpg', image)
                 elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 1 and pinky_finger_state == 1:
                     text = "파노라마"
-                    myDrone.move_left(100)
+                    # myDrone.move_left(100)
+                    image=myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama1.jpg', image)
-                    myDrone.move_right(50)
+                    time.sleep(0.1)
+                    # myDrone.move_right(50)
+                    image=myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama2.jpg', image)
-                    myDrone.move_right(50)
+                    time.sleep(0.25)
+                    # myDrone.move_right(50)
+                    image=myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama3.jpg', image)
-                    myDrone.move_right(50)
+                    time.sleep(0.25)
+                    # myDrone.move_right(50)
+                    image=myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama4.jpg', image)
-                    myDrone.move_right(50)
+                    time.sleep(0.25)
+                    # myDrone.move_right(50)
+                    image=myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama5.jpg', image)
-                    myDrone.move_left(100)
-                    img_name=['panorama1.jpg','panorama2.jpg','panorama3.jpg','panorama4.jpg','panorama5.jpg']
-                    imgs=[]
-                    for name in img_name:
-                        img=cv2.imread(name)
-                        imgs.append(img)
-                    stitcher= cv2.Stitcher_create()
-                    status, dst = stitcher.stitch(imgs)
-                    cv2.imwrite('output.jpg',dst)
+                    time.sleep(0.25)
+                    # myDrone.move_left(100)
+                    img_names = ['panorama1.jpg', 'panorama2.jpg', 'panorama3.jpg', 'panorama4.jpg', 'panorama5.jpg']
 
+                    imgs = []
+                    for name in img_names:
+                        img = cv2.imread(name)
+
+                        if img is None:
+                            print('Image load failed!')
+                            sys.exit()
+
+                        imgs.append(img)
+
+                    stitcher = cv2.Stitcher_create()
+                    status, dst = stitcher.stitch(imgs)
+
+                    if status != cv2.Stitcher_OK:
+                        print('Stitch failed!')
+                        sys.exit()
+
+                    cv2.imwrite('output.jpg', dst)
                 w, h = font.getsize(text)
 
                 x = 50
@@ -182,7 +204,7 @@ with mp_hands.Hands(
                 image = np.array(image)
 
 
-        cv2.imshow('MediaPipe Hands', image)
 
+        cv2.imshow('MediaPipe Hands', image)
         if cv2.waitKey(5) & 0xFF == 27:
             break
