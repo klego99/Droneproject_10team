@@ -1,175 +1,133 @@
-"""The 21 hand landmarks."""
 import sys
 import time
-
-# 손가락 위치 정의 참고 https://google.github.io/mediapipe/images/mobile/hand_landmarks.png
-#
-# WRIST = 0
-# THUMB_CMC = 1
-# THUMB_MCP = 2
-# THUMB_IP = 3
-# THUMB_TIP = 4    엄지
-# INDEX_FINGER_MCP = 5
-# INDEX_FINGER_PIP = 6
-# INDEX_FINGER_DIP = 7
-# INDEX_FINGER_TIP = 8  검지
-# MIDDLE_FINGER_MCP = 9
-# MIDDLE_FINGER_PIP = 10
-# MIDDLE_FINGER_DIP = 11
-# MIDDLE_FINGER_TIP = 12  중지
-# RING_FINGER_MCP = 13
-# RING_FINGER_PIP = 14
-# RING_FINGER_DIP = 15
-# RING_FINGER_TIP = 16  약지
-# PINKY_MCP = 17
-# PINKY_PIP = 18
-# PINKY_DIP = 19
-# PINKY_TIP = 20  새끼
-
-
-# 필요한 라이브러리
-# pip install opencv-python mediapipe pillow numpy
-
 import cv2
 import mediapipe as mp
-from PIL import ImageFont, ImageDraw, Image
 import numpy as np
 from utils import *
-from os import path
+max_num_hands = 2
+gesture = {
+    0:'fist', 1:'one', 2:'two', 3:'three', 4:'four', 5:'five',
+    6:'six', 7:'rock', 8:'spiderman', 9:'yeah', 10:'ok',
+}
+rps_gesture = {0:'up', 1:'left', 3:'forward',4:'back', 5:'down', 9:'right', 10:'camera'}
 
-mp_drawing = mp.solutions.drawing_utils
-mp_hands = mp.solutions.hands
-mp_drawing_styles = mp.solutions.drawing_styles
-#Drone on
 myDrone = initTello()
 # myDrone.takeoff()
-# For webcam input:
+
+# MediaPipe hands model
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+hands = mp_hands.Hands(
+    max_num_hands=max_num_hands,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5)
+
+# Gesture recognition model
+file = np.genfromtxt('gesture_train.csv', delimiter=',')
+angle = file[:,:-1].astype(np.float32)
+label = file[:, -1].astype(np.float32)
+knn = cv2.ml.KNearest_create()
+knn.train(angle, cv2.ml.ROW_SAMPLE, label)
 
 
-with mp_hands.Hands(
-        model_complexity=1,
-        max_num_hands=1,
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5) as hands:
-    while True:
+while True:
+    img = myDrone.get_frame_read().frame
 
-        image = myDrone.get_frame_read().frame
-        # cv2.imshow("Image", image)
-        # Flip the image horizontally for a later selfie-view display, and convert
-        # the BGR image to RGB.
-        image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+    img = cv2.flip(img, 1)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        # To improve performance, optionally mark the image as not writeable to
-        # pass by reference.
-        image.flags.writeable = True
-        results = hands.process(image)
+    result = hands.process(img)
 
-        # Draw the hand annotations on the image.
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        image_height, image_width, _ = image.shape
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
+    if result.multi_hand_landmarks is not None:
+        rps_result = []
 
-                # 엄지를 제외한 나머지 4개 손가락의 마디 위치 관계를 확인하여 플래그 변수를 설정합니다. 손가락을 일자로 편 상태인지 확인합니다.
-                thumb_finger_state = 0
-                if hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_CMC].y * image_height > hand_landmarks.landmark[
-                    mp_hands.HandLandmark.THUMB_MCP].y * image_height:
-                    if hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_MCP].y * image_height > \
-                            hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP].y * image_height:
-                        if hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP].y * image_height > \
-                                hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * image_height:
-                            thumb_finger_state = 1
+        for res in result.multi_hand_landmarks:
+            joint = np.zeros((21, 3))
+            for j, lm in enumerate(res.landmark):
+                joint[j] = [lm.x, lm.y, lm.z]
 
-                index_finger_state = 0
-                if hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP].y * image_height > \
-                        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y * image_height:
-                    if hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y * image_height > \
-                            hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_DIP].y * image_height:
-                        if hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_DIP].y * image_height > \
-                                hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height:
-                            index_finger_state = 1
+            # Compute angles between joints
+            v1 = joint[[0,1,2,3,0,5,6,7,0,9,10,11,0,13,14,15,0,17,18,19],:] # Parent joint
+            v2 = joint[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],:] # Child joint
+            v = v2 - v1 # [20,3]
+            # Normalize v
+            v = v / np.linalg.norm(v, axis=1)[:, np.newaxis]
 
-                middle_finger_state = 0
-                if hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP].y * image_height > \
-                        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y * image_height:
-                    if hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y * image_height > \
-                            hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_DIP].y * image_height:
-                        if hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_DIP].y * image_height > \
-                                hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y * image_height:
-                            middle_finger_state = 1
+            # Get angle using arcos of dot product
+            angle = np.arccos(np.einsum('nt,nt->n',
+                v[[0,1,2,4,5,6,8,9,10,12,13,14,16,17,18],:],
+                v[[1,2,3,5,6,7,9,10,11,13,14,15,17,18,19],:])) # [15,]
 
-                ring_finger_state = 0
-                if hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_MCP].y * image_height > \
-                        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y * image_height:
-                    if hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y * image_height > \
-                            hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_DIP].y * image_height:
-                        if hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_DIP].y * image_height > \
-                                hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y * image_height:
-                            ring_finger_state = 1
+            angle = np.degrees(angle) # Convert radian to degree
 
-                pinky_finger_state = 0
-                if hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_MCP].y * image_height > hand_landmarks.landmark[
-                    mp_hands.HandLandmark.PINKY_PIP].y * image_height:
-                    if hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].y * image_height > \
-                            hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_DIP].y * image_height:
-                        if hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_DIP].y * image_height > \
-                                hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].y * image_height:
-                            pinky_finger_state = 1
+            # Inference gesture
+            data = np.array([angle], dtype=np.float32)
+            ret, results, neighbours, dist = knn.findNearest(data, 3)
+            idx = int(results[0][0])
 
-                # 손가락 위치 확인한 값을 사용하여 가위,바위,보 중 하나를 출력 해줍니다.
-                font = ImageFont.truetype("fonts/gulim.ttc", 80)
-                image = Image.fromarray(image)
-                draw = ImageDraw.Draw(image)
+            # Draw gesture result
+            if idx in rps_gesture.keys():
+                org = (int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0]))
+                cv2.putText(img, text=rps_gesture[idx].upper(), org=(org[0], org[1] + 20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
 
-                text = ""
-                if thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
-                    text="앞으로"
-                    # myDrone.move_forward(70)
-                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 0 and pinky_finger_state == 0:
-                    text = "뒤로"
-                    # myDrone.move_back(70)
-                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 0:
-                    text = "왼쪽으로"
-                    # myDrone.move_left(70)
-                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
-                    text = "오른쪽으로"
-                    # myDrone.move_right(70)
-                elif thumb_finger_state == 1 and index_finger_state == 0 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 0:
-                    text ="위로"
+                rps_result.append({
+                    'rps': rps_gesture[idx],
+                    'org': org
+                })
+
+            mp_drawing.draw_landmarks(img, res, mp_hands.HAND_CONNECTIONS)
+
+            # Who wins?
+            if len(rps_result) >= 2:
+                text = ''
+                if rps_result[0]['rps']=='up' or rps_result[1]['rps']=='up':
                     # myDrone.move_up(50)
-                elif thumb_finger_state == 1 and index_finger_state == 1 and middle_finger_state == 1 and ring_finger_state == 1 and pinky_finger_state == 1:
-                    text = "아래로"
+                    text='up'
+                if rps_result[0]['rps']=='down' or rps_result[1]['rps']=='down':
                     # myDrone.move_down(50)
-                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 0 and pinky_finger_state == 1:
-                    text = "촬영"
+                    text = 'down'
+                if rps_result[0]['rps']=='forward' or rps_result[1]['rps']=='forward':
+                    # myDrone.move_forward(50)
+                    text = 'forward'
+                if rps_result[0]['rps']=='back' or rps_result[1]['rps']=='back':
+                    # myDrone.move_back(50)
+                    text = 'back'
+                if rps_result[0]['rps']=='right' or rps_result[1]['rps']=='right':
+                    # myDrone.move_right(50)
+                    text = 'right'
+                if rps_result[0]['rps']=='left' or rps_result[1]['rps']=='left':
+                    # myDrone.move_left(50)
+                    text = 'left'
+                if rps_result[0]['rps']=='camera' or rps_result[1]['rps']=='camera':
+                    text = 'camera'
                     image = np.array(image)
                     cv2.imwrite('self camera test.jpg', image)
-                elif thumb_finger_state == 0 and index_finger_state == 1 and middle_finger_state == 0 and ring_finger_state == 1 and pinky_finger_state == 1:
-                    text = "파노라마"
+                if rps_result[0]['rps']=='right' and rps_result[1]['rps']=='right':
+                    text = 'panorama'
                     # myDrone.move_left(100)
-                    image=myDrone.get_frame_read().frame
+                    image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama1.jpg', image)
-                    time.sleep(0.1)
+                    time.sleep(0.25)
                     # myDrone.move_right(50)
-                    image=myDrone.get_frame_read().frame
+                    image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama2.jpg', image)
                     time.sleep(0.25)
                     # myDrone.move_right(50)
-                    image=myDrone.get_frame_read().frame
+                    image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama3.jpg', image)
                     time.sleep(0.25)
                     # myDrone.move_right(50)
-                    image=myDrone.get_frame_read().frame
+                    image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama4.jpg', image)
                     time.sleep(0.25)
                     # myDrone.move_right(50)
-                    image=myDrone.get_frame_read().frame
+                    image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama5.jpg', image)
                     time.sleep(0.25)
@@ -194,17 +152,8 @@ with mp_hands.Hands(
                         sys.exit()
 
                     cv2.imwrite('output.jpg', dst)
-                w, h = font.getsize(text)
-
-                x = 50
-                y = 50
-
-                draw.rectangle((x, y, x + w, y + h), fill='black')
-                draw.text((x, y), text, font=font, fill=(255, 255, 255))
-                image = np.array(image)
 
 
-
-        cv2.imshow('MediaPipe Hands', image)
-        if cv2.waitKey(5) & 0xFF == 27:
-            break
+    cv2.imshow('Game', img)
+    if cv2.waitKey(1) == ord('q'):
+        break
