@@ -102,6 +102,7 @@ while True:
                     text = 'left'
                 if rps_result[0]['rps']=='camera' or rps_result[1]['rps']=='camera':
                     text = 'camera'
+                    image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('self camera test.jpg', image)
                 if rps_result[0]['rps']=='right' and rps_result[1]['rps']=='right':
