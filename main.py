@@ -104,7 +104,7 @@ while True:
                     text = 'camera'
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
-                    cv2.imwrite('self camera test.jpg', image)
+                    cv2.imwrite('camera.jpg', image)
                 if rps_result[0]['rps']=='right' and rps_result[1]['rps']=='right':
                     text = 'panorama'
                     # myDrone.move_left(100)
