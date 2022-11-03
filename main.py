@@ -5,14 +5,10 @@ import mediapipe as mp
 import numpy as np
 from utils import *
 max_num_hands = 2
-gesture = {
-    0:'fist', 1:'one', 2:'two', 3:'three', 4:'four', 5:'five',
-    6:'six', 7:'rock', 8:'spiderman', 9:'yeah', 10:'ok',
-}
-rps_gesture = {0:'up', 1:'left', 3:'forward',4:'back', 5:'down', 9:'right', 10:'camera'}
+drone_gesture = {0: 'up', 1: 'left', 3: 'forward', 4: 'back', 5: 'down', 9: 'right', 10: 'camera'}
 
 myDrone = initTello()
-# myDrone.takeoff()
+#myDrone.takeoff()
 
 # MediaPipe hands model
 mp_hands = mp.solutions.hands
@@ -41,7 +37,7 @@ while True:
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     if result.multi_hand_landmarks is not None:
-        rps_result = []
+        drone_result = []
 
         for res in result.multi_hand_landmarks:
             joint = np.zeros((21, 3))
@@ -68,71 +64,84 @@ while True:
             idx = int(results[0][0])
 
             # Draw gesture result
-            if idx in rps_gesture.keys():
+            if idx in drone_gesture.keys():
                 org = (int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0]))
-                cv2.putText(img, text=rps_gesture[idx].upper(), org=(org[0], org[1] + 20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
+                cv2.putText(img, text=drone_gesture[idx].upper(), org=(org[0], org[1] + 20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
 
-                rps_result.append({
-                    'rps': rps_gesture[idx],
+                drone_result.append({
+                    'control': drone_gesture[idx],
                     'org': org
                 })
 
             mp_drawing.draw_landmarks(img, res, mp_hands.HAND_CONNECTIONS)
 
-            # Who wins?
-            if len(rps_result) >= 2:
+            if len(drone_result) >= 2:
                 text = ''
-                if rps_result[0]['rps']=='up' or rps_result[1]['rps']=='up':
+
+                if drone_result[0]['control'] == 'up' or drone_result[1]['control'] == 'up':
                     # myDrone.move_up(50)
-                    text='up'
-                if rps_result[0]['rps']=='down' or rps_result[1]['rps']=='down':
+                    text = 'up'
+
+                if drone_result[0]['control'] == 'down' or drone_result[1]['control'] == 'down':
                     # myDrone.move_down(50)
                     text = 'down'
-                if rps_result[0]['rps']=='forward' or rps_result[1]['rps']=='forward':
+
+                if drone_result[0]['control'] == 'forward' or drone_result[1]['control'] == 'forward':
                     # myDrone.move_forward(50)
                     text = 'forward'
-                if rps_result[0]['rps']=='back' or rps_result[1]['rps']=='back':
+
+                if drone_result[0]['control'] == 'back' or drone_result[1]['control'] == 'back':
                     # myDrone.move_back(50)
                     text = 'back'
-                if rps_result[0]['rps']=='right' or rps_result[1]['rps']=='right':
+
+                if drone_result[0]['control'] == 'right' or drone_result[1]['control'] == 'right':
                     # myDrone.move_right(50)
                     text = 'right'
-                if rps_result[0]['rps']=='left' or rps_result[1]['rps']=='left':
+
+                if drone_result[0]['control'] == 'left' or drone_result[0]['control'] == 'left':
                     # myDrone.move_left(50)
                     text = 'left'
-                if rps_result[0]['rps']=='camera' or rps_result[1]['rps']=='camera':
+
+                if drone_result[0]['control'] == 'camera' or drone_result[0]['control'] == 'camera':
                     text = 'camera'
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('camera.jpg', image)
-                if rps_result[0]['rps']=='right' and rps_result[1]['rps']=='right':
+
+                if drone_result[0]['control'] == 'right' and drone_result[1]['control'] == 'right':
                     text = 'panorama'
-                    # myDrone.move_left(100)
+                    # myDrone.rotate_counter_clockwise(30)
+
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama1.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.move_right(50)
+                    # myDrone.rotate_clockwise(30)
+
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama2.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.move_right(50)
+                    # myDrone.rotate_clockwise(30)
+
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama3.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.move_right(50)
+                    # myDrone.rotate_clockwise(30)
+
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama4.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.move_right(50)
+                    # myDrone.rotate_clockwise(30)
+
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama5.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.move_left(100)
+
+                    # myDrone.rotate_counter_clockwise(90)
                     img_names = ['panorama1.jpg', 'panorama2.jpg', 'panorama3.jpg', 'panorama4.jpg', 'panorama5.jpg']
 
                     imgs = []
@@ -152,9 +161,12 @@ while True:
                         print('Stitch failed!')
                         sys.exit()
 
-                    cv2.imwrite('output.jpg', dst)
+                    src = dst[10:1200, 0:700].copy()
+
+                    cv2.imwrite('panorama.jpg', src)
 
 
-    cv2.imshow('Game', img)
-    if cv2.waitKey(1) == ord('q'):
-        break
+        cv2.imshow('Game', img)
+
+        if cv2.waitKey(1) == ord('q'):
+            break
