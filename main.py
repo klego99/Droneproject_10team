@@ -8,7 +8,7 @@ max_num_hands = 2
 drone_gesture = {0: 'up', 1: 'left', 3: 'forward', 4: 'back', 5: 'down', 9: 'right', 10: 'camera'}
 
 myDrone = initTello()
-#myDrone.takeoff()
+myDrone.takeoff()
 
 # MediaPipe hands model
 mp_hands = mp.solutions.hands
@@ -79,30 +79,30 @@ while True:
                 text = ''
 
                 if drone_result[0]['control'] == 'up' or drone_result[1]['control'] == 'up':
-                    # myDrone.move_up(50)
+                    myDrone.move_up(50)
                     text = 'up'
 
                 if drone_result[0]['control'] == 'down' or drone_result[1]['control'] == 'down':
-                    # myDrone.move_down(50)
+                    myDrone.move_down(50)
                     text = 'down'
 
                 if drone_result[0]['control'] == 'forward' or drone_result[1]['control'] == 'forward':
-                    # myDrone.move_forward(50)
+                    myDrone.move_forward(50)
                     text = 'forward'
 
                 if drone_result[0]['control'] == 'back' or drone_result[1]['control'] == 'back':
-                    # myDrone.move_back(50)
+                    myDrone.move_back(50)
                     text = 'back'
 
                 if drone_result[0]['control'] == 'right' or drone_result[1]['control'] == 'right':
-                    # myDrone.move_right(50)
+                    myDrone.move_right(50)
                     text = 'right'
 
-                if drone_result[0]['control'] == 'left' or drone_result[0]['control'] == 'left':
-                    # myDrone.move_left(50)
+                if drone_result[0]['control'] == 'left' or drone_result[1]['control'] == 'left':
+                    myDrone.move_left(50)
                     text = 'left'
 
-                if drone_result[0]['control'] == 'camera' or drone_result[0]['control'] == 'camera':
+                if drone_result[0]['control'] == 'camera' or drone_result[1]['control'] == 'camera':
                     text = 'camera'
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
@@ -124,25 +124,14 @@ while True:
                     time.sleep(0.25)
                     # myDrone.rotate_clockwise(30)
 
+                    myDrone.rotate_clockwise(30)
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama3.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.rotate_clockwise(30)
 
-                    image = myDrone.get_frame_read().frame
-                    image = np.array(image)
-                    cv2.imwrite('panorama4.jpg', image)
-                    time.sleep(0.25)
-                    # myDrone.rotate_clockwise(30)
-
-                    image = myDrone.get_frame_read().frame
-                    image = np.array(image)
-                    cv2.imwrite('panorama5.jpg', image)
-                    time.sleep(0.25)
-
-                    # myDrone.rotate_counter_clockwise(90)
-                    img_names = ['panorama1.jpg', 'panorama2.jpg', 'panorama3.jpg', 'panorama4.jpg', 'panorama5.jpg']
+                    myDrone.rotate_counter_clockwise(45)
+                    img_names = ['panorama1.jpg', 'panorama2.jpg', 'panorama3.jpg']
 
                     imgs = []
                     for name in img_names:
@@ -161,12 +150,12 @@ while True:
                         print('Stitch failed!')
                         sys.exit()
 
-                    src = dst[10:1200, 0:700].copy()
+                    cv2.imwrite('Panorama.jpg', dst)
 
-                    cv2.imwrite('panorama.jpg', src)
-
-
-        cv2.imshow('Game', img)
+        cv2.imshow('Drone_view', img)
 
         if cv2.waitKey(1) == ord('q'):
             break
+
+
+
