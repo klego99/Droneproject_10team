@@ -155,8 +155,8 @@ while True:
                     if status != cv2.Stitcher_OK:
                         print('Stitch failed!')
                         sys.exit()
-
-                    cv2.imwrite('Panorama.jpg', dst)
+                    src = dst[10:1200, 0:700].copy()
+                    cv2.imwrite('Panorama.jpg', src)
 
         cv2.imshow('Drone_view', img)
 
