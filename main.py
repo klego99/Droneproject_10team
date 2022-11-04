@@ -66,7 +66,7 @@ while True:
             # Draw gesture result
             if idx in drone_gesture.keys():
                 org = (int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0]))
-                cv2.putText(img, text=drone_gesture[idx].upper(), org=(org[0], org[1] + 20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
+                # cv2.putText(img, text=drone_gesture[idx].upper(), org=(org[0], org[1] +l 20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
 
                 drone_result.append({
                     'control': drone_gesture[idx],
@@ -78,31 +78,37 @@ while True:
             if len(drone_result) >= 2:
                 text = ''
 
-                if drone_result[0]['control'] == 'up' or drone_result[1]['control'] == 'up':
+                if drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'up':
                     myDrone.move_up(50)
                     text = 'up'
 
-                if drone_result[0]['control'] == 'down' or drone_result[1]['control'] == 'down':
+                if (drone_result[0]['control'] == 'down' and drone_result[1]['control'] == 'up') or \
+                        (drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'down'):
                     myDrone.move_down(50)
                     text = 'down'
 
-                if drone_result[0]['control'] == 'forward' or drone_result[1]['control'] == 'forward':
+                if (drone_result[0]['control'] == 'forward' and drone_result[1]['control'] == 'up') or \
+                        (drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'forward'):
                     myDrone.move_forward(50)
                     text = 'forward'
 
-                if drone_result[0]['control'] == 'back' or drone_result[1]['control'] == 'back':
+                if (drone_result[0]['control'] == 'back' and drone_result[1]['control'] == 'up') or \
+                        (drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'back'):
                     myDrone.move_back(50)
                     text = 'back'
 
-                if drone_result[0]['control'] == 'right' or drone_result[1]['control'] == 'right':
+                if (drone_result[0]['control'] == 'right' and drone_result[1]['control'] == 'up') or \
+                        (drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'right'):
                     myDrone.move_right(50)
                     text = 'right'
 
-                if drone_result[0]['control'] == 'left' or drone_result[1]['control'] == 'left':
+                if (drone_result[0]['control'] == 'left' and drone_result[1]['control'] == 'up') or \
+                        (drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'left'):
                     myDrone.move_left(50)
                     text = 'left'
 
-                if drone_result[0]['control'] == 'camera' or drone_result[1]['control'] == 'camera':
+                if (drone_result[0]['control'] == 'camera' and drone_result[1]['control'] == 'up') or \
+                        (drone_result[0]['control'] == 'up' and drone_result[1]['control'] == 'camera'):
                     text = 'camera'
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
@@ -110,19 +116,19 @@ while True:
 
                 if drone_result[0]['control'] == 'right' and drone_result[1]['control'] == 'right':
                     text = 'panorama'
-                    # myDrone.rotate_counter_clockwise(30)
+                    myDrone.rotate_counter_clockwise(30)
 
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama1.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.rotate_clockwise(30)
+                    myDrone.rotate_clockwise(30)
 
                     image = myDrone.get_frame_read().frame
                     image = np.array(image)
                     cv2.imwrite('panorama2.jpg', image)
                     time.sleep(0.25)
-                    # myDrone.rotate_clockwise(30)
+                    myDrone.rotate_clockwise(30)
 
                     myDrone.rotate_clockwise(30)
                     image = myDrone.get_frame_read().frame
